@@ -4,7 +4,7 @@ music data processing from the million
 song dataset
 '''
 
-import sklearn
+# import sklearn
 from hdf5_getters import *
 import os
 
@@ -56,6 +56,25 @@ def pitch_perms(info):
         perm = sorted(np.arange(kNumPitches), key = lambda i: -pitch[i])
         perms.append(perm)
     return perms
+
+def segments_lengths(info):
+    '''
+    Takes segments beginnings array
+    finds differences between adjacent
+    entries
+    '''
+    return np.array([info['segments'][i + 1] - info['segments'][i] for i in xrange(info['segments'].shape[0] - 1)])
+
+def discrete_segments(info, mult = 100):
+    '''
+    Takes segment beginnings representation
+    and returns discretized version (number
+    of occurences is proportional to interval
+    length). Note we only look at all but the
+    last segment (no interval for last segment)
+    '''
+    time_intervals = segments_lengths(info) * mult
+    return reduce(lambda x,y: x + y, map(lambda i: [i] * int(round(time_intervals[i])), range(len(time_intervals))))
 
 
 def generate_data(data_path):
