@@ -7,6 +7,8 @@ song dataset
 # import sklearn
 from hdf5_getters import *
 import os
+import numpy as np
+import glob 
 
 ##### Global constants #####
 kNumPitches = 12
@@ -89,3 +91,35 @@ def generate_data(data_path):
         for filename in files:
             dataset.append(extract_data(filename))
     return dataset
+
+### SONG TO WORD REPRESENTATIONS
+# in first pass implementation, converts each segment to max pitch
+def convert_raw_to_word(h5):
+    return np.argmax(h5,axis=1)
+
+def make_one_hot(idx):
+    one_hot = np.zeros(4, dtype=np.int)
+    one_hot[idx] = 1
+    return one_hot
+
+### FEATURE EXTRACTORS
+def bag_of_words(song):
+    init_dict = Counter({i: 0 for i in range(12)})
+    init_dict.update(Counter([song[i] for i in range(song.size)]))
+    bg_freq = init_dict
+    freqs = bg_freq.values()
+    return freqs
+
+def bigrams(song):
+    init_dict = Counter({(i,j): 0 for i in range(12) for j in range(12)})
+    init_dict.update(Counter([(song[i-1],song[i]) for i in range(1,song.size)]))
+    bg_freq = init_dict
+    freqs = bg_freq.values()
+    return freqs
+
+def trigrams(song):
+    init_dict = Counter({(i,j,k): 0 for i in range(12) for j in range(12) for k in range(12)})
+    init_dict.update(Counter([(song[i-2],song[i-1],song[i]) for i in range(2,song.size)]))
+    tg_freq = init_dict
+    freqs = tg_freq.values()
+    return freqs
