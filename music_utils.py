@@ -10,10 +10,19 @@ import os
 import numpy as np
 import glob 
 from collections import Counter
+from pyo import *
 
 ##### Global constants #####
 kNumPitches = 12
 ##### End global constants #####
+
+
+def play_song(pitches_array, segment_starts):
+    lengths = segments_lengths(segment_starts)
+    s = Server.boot()
+    osc = Osc(SineTable())
+    for i in xrange(len(pitches_array) - 1): # can't get the last one
+        pass
 
 def extract_data(filename):
     '''
@@ -25,15 +34,21 @@ def extract_data(filename):
     '''
     h5 = open_h5_file_read(filename)
     info = {}
-    info['title'] = get_title(h5) # defaults to first song
+    #info['title'] = get_title(h5) # defaults to first song
     info['tempo'] = get_tempo(h5)
-    info['artist'] = get_artist_name(h5)
+    #info['artist'] = get_artist_name(h5)
     info['pitches'] = get_segments_pitches(h5)
-    info['terms'] = get_artist_terms(h5)
-    info['hotness'] = get_song_hotttnesss(h5)
-    info['beats'] = get_beats_start(h5)
-    info['bars'] = get_bars_start(h5)
+    #info['terms'] = get_artist_terms(h5)
+    info['genre'] = get_artist_mbtags(h5)
+    #info['hotness'] = get_song_hotttnesss(h5)
+    #info['beats'] = get_beats_start(h5)
+    #info['bars'] = get_bars_start(h5)
     info['segments'] = get_segments_start(h5)
+    info['time signature'] = get_time_signature(h5)
+    info['loudness'] = get_segments_loudness_max(h5)
+    info['mode'] = get_mode(h5)
+    info['key'] = get_key(h5)
+    info['filename'] = filename # for debugging 
     h5.close()
     return info
 
@@ -60,13 +75,13 @@ def pitch_perms(info):
         perms.append(perm)
     return perms
 
-def segments_lengths(info):
+def segments_lengths(segments):
     '''
     Takes segments beginnings array
     finds differences between adjacent
     entries
     '''
-    return np.array([info['segments'][i + 1] - info['segments'][i] for i in xrange(info['segments'].shape[0] - 1)])
+    return np.array([segments[i + 1] - segments[i] for i in xrange(segments.shape[0] - 1)])
 
 def discrete_segments(info, mult = 100):
     '''
@@ -76,7 +91,7 @@ def discrete_segments(info, mult = 100):
     length). Note we only look at all but the
     last segment (no interval for last segment)
     '''
-    time_intervals = segments_lengths(info) * mult
+    time_intervals = segments_lengths(info['segments']) * mult
     return reduce(lambda x,y: x + y, map(lambda i: [i] * int(round(time_intervals[i])), range(len(time_intervals))))
 
 
