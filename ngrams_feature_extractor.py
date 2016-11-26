@@ -7,7 +7,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
 from keras.optimizers import SGD
 from keras.regularizers import l2, l1
-from music_utils.py import *
+from music_utils import *
 
 
 

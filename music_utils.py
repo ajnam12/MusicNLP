@@ -9,6 +9,7 @@ from hdf5_getters import *
 import os
 import numpy as np
 import glob 
+from collections import Counter
 
 ##### Global constants #####
 kNumPitches = 12
