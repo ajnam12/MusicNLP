@@ -34,11 +34,10 @@ def make_train_example(h5, feature_extractor):
 
          
 ### MAKE DATASET
+"""
 genres = ['rock', 'punk', 'folk', 'hip hop rnb and dance hall']
 genre_idxs = dict(zip(genres, range(len(genres))))
 genre_songs = {'rock': [], 'punk': [], 'folk': [], 'hip hop rnb and dance hall': []}
-fe = trigrams
-vec_size = 12**3
 
 tags_list = []
 data_path = "~/MillionSongSubset/data"
@@ -58,39 +57,49 @@ for root, dirs, files in os.walk("MillionSongSubset/data"):
         #train_pair = make_train_pair(h5)
         #titles.append(train_pair['title'])
         #pitch_diff_list.append(train_pair['pitch_diffs'])
+"""
+def make_dataset(feature_extractor):
+    
+    data_path = ""
 
-num_train = 175
-num_test = 25
-x_train = []
-y_train = []
-x_test = []
-y_test = []
-for k,v in genre_songs.iteritems():
-  y_train += [make_one_hot(genre_idxs[k])]*num_train
-  x_train += v[:num_train]
-  y_test += [make_one_hot(genre_idxs[k])]*num_test
-  x_test += v[-num_test:]
+    num_train = 175
+    num_test = 25
+    x_train = []
+    y_train = []
+    x_test = []
+    y_test = []
+    for k,v in genre_songs.iteritems():
+      y_train += [make_one_hot(genre_idxs[k])]*num_train
+      x_train += v[:num_train]
+      y_test += [make_one_hot(genre_idxs[k])]*num_test
+      x_test += v[-num_test:]
 
-x_train = np.array(x_train)
-y_train = np.array(y_train)
-x_test = np.array(x_test)
-y_test = np.array(y_test)
+    x_train = np.array(x_train)
+    y_train = np.array(y_train)
+    x_test = np.array(x_test)
+    y_test = np.array(y_test)
 
-x_train = np.hstack((x_train,y_train))
-np.random.shuffle(x_train)
-x_train, y_train = np.hsplit(x_train, [-4])
+    x_train = np.hstack((x_train,y_train))
+    np.random.shuffle(x_train)
+    x_train, y_train = np.hsplit(x_train, [-4])
 
-print x_train.shape
-print y_train.shape
-print x_test.shape
-print y_test.shape
+    print x_train.shape
+    print y_train.shape
+    print x_test.shape
+    print y_test.shape
 
 ### TRAIN MODEL
+fe = trigrams
+vec_size = 12**3
+regs = [0.005, 0.01, 0.05]
+lrs = [0.01, 0.05, 0.1]
+num_layers = [1, 2, 3]
 model = vanilla_model(vec_size, len(genres), num_layers=1, reg=0.01)
 sgd = SGD(lr=0.1,decay=1e-6,momentum=0.9,nesterov=True)
 model.compile(loss='categorical_crossentropy',
               optimizer=sgd,
               metrics=['accuracy'])
+
 print "Training..."
 model.fit(x_train, y_train, nb_epoch=20,batch_size=50)
 print "Testing..."
@@ -101,9 +110,3 @@ print score
 #print Counter(tags_list).most_common(30)
 #for k,v in genre_songs.iteritems():
 #  print k + " " + str(len(v))
-
-# some lines omitted
-#neigh = NearestNeighbors(n_neighbors=1) # predict the closest song
-# a title list is also maintained
-#neigh.fit([sum(diff) for diff in pitch_diff_list[5000:]])
-#neigh.kneighbors(sum(pitch_diff_list[2029])) # example prediction

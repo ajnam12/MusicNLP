@@ -10,19 +10,20 @@ import os
 import numpy as np
 import glob 
 from collections import Counter
-from pyo import *
+#from pyo import *
 
 ##### Global constants #####
 kNumPitches = 12
 ##### End global constants #####
 
-
+"""
 def play_song(pitches_array, segment_starts):
     lengths = segments_lengths(segment_starts)
     s = Server.boot()
     osc = Osc(SineTable())
     for i in xrange(len(pitches_array) - 1): # can't get the last one
         pass
+"""
 
 def extract_data(filename):
     '''
