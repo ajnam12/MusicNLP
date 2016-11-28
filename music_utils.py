@@ -11,9 +11,13 @@ import numpy as np
 import glob 
 from collections import Counter
 #from pyo import *
+from pyo import *
+from time import sleep
 
 ##### Global constants #####
 kNumPitches = 12
+kNoteFrequencies = [261.626, 277.183, 293.665, 311.127, 329.628, 349.228,\
+ 369.994, 391.995, 415.305, 440.000, 466.164, 493.883]
 ##### End global constants #####
 
 """
@@ -24,6 +28,19 @@ def play_song(pitches_array, segment_starts):
     for i in xrange(len(pitches_array) - 1): # can't get the last one
         pass
 """
+s = Server()
+s.boot()
+
+def play_song(pitches_arrays, segment_starts):
+    lengths = segments_lengths(segment_starts)
+    sine = Sine()
+    sine.out()
+    s.start()
+    for i in xrange(len(pitches_arrays) - 1): # can't get the last one
+        freq = kNoteFrequencies[np.argmax(pitches_arrays[i])]
+        sine.freq = freq
+        sleep(lengths[i])
+    s.stop()
 
 def extract_data(filename):
     '''
