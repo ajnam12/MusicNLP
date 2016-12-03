@@ -11,7 +11,6 @@ import numpy as np
 import glob 
 from collections import Counter
 #from pyo import *
-from pyo import *
 from time import sleep
 
 ##### Global constants #####
@@ -28,8 +27,8 @@ def play_song(pitches_array, segment_starts):
     for i in xrange(len(pitches_array) - 1): # can't get the last one
         pass
 """
-s = Server()
-s.boot()
+#s = Server()
+#s.boot()
 
 def play_song(pitches_arrays, segment_starts):
     lengths = segments_lengths(segment_starts)
@@ -145,15 +144,20 @@ def bag_of_words(song):
     return freqs
 
 def bigrams(song):
+    pitches = np.argmax(song['pitches'],axis=1)
     init_dict = Counter({(i,j): 0 for i in range(12) for j in range(12)})
-    init_dict.update(Counter([(song[i-1],song[i]) for i in range(1,song.size)]))
+    init_dict.update(Counter([(pitches[i-1],pitches[i]) for i in range(1,pitches.size)]))
     bg_freq = init_dict
     freqs = bg_freq.values()
     return freqs
 
 def trigrams(song):
+    pitches = np.argmax(song['pitches'],axis=1)
     init_dict = Counter({(i,j,k): 0 for i in range(12) for j in range(12) for k in range(12)})
-    init_dict.update(Counter([(song[i-2],song[i-1],song[i]) for i in range(2,song.size)]))
-    tg_freq = init_dict
-    freqs = tg_freq.values()
-    return freqs
+    init_dict.update(Counter([(pitches[i-2],pitches[i-1],pitches[i]) for i in range(2,pitches.size)]))
+    p_tg_freq = init_dict
+    loudness = np.round(song['loudness'], decimals=0)
+    init_dict = Counter({(i,j,k): 0 for i in range(10) for j in range(10) for k in range(10)})
+    init_dict.update(Counter([(loudness[i-2],loudness[i-1],loudness[i]) for i in range(2,pitches.size)]))
+    l_tg_freq = init_dict
+    return p_tg_freq.values() + l_tg_freq.values()
