@@ -76,7 +76,7 @@ y_train = np.array(y_train)
 x_test = np.array(x_test)
 y_test = np.array(y_test)
 
-x_train = np.hstack((x_train,y_train))
+x_train = np.hstack((x_train,y_train)) # (())
 np.random.shuffle(x_train)
 x_train, y_train = np.hsplit(x_train, [-4])
 
