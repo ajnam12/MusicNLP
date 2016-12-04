@@ -20,19 +20,6 @@ kNoteFrequencies = [261.626, 277.183, 293.665, 311.127, 329.628, 349.228,\
 ##### End global constants #####
 
 
-def examine_loudness(song, num_segments=50):
-    '''
-    Given a song feature dict, takes standard deviation of loudnesses 
-    for fixed length segments to ascertain variability in loudnesses
-    '''
-    loudness_values = song['loudness'] # loudness for each segment
-    if len(loudness_values) < num_segments:
-        #raise Exception("Too few loudness values for the number of segments: {loud}".format(loud=len(loudness_values)))
-        #loudness_values = (loudness_values * (num_segments/len(loudness_values) + 1))[:num_segments]
-        loudness_values = [0] * num_segments
-    chunk_lengths = len(loudness_values)/num_segments
-    return [np.std(loudness_values[chunk_lengths * i:chunk_lengths * (i + 1)])\
-        for i in xrange(num_segments)]
 
 
 def extract_data(filename):
@@ -158,7 +145,8 @@ def bigrams(song):
     init_dict.update(Counter([(pitches[i-1],pitches[i]) for i in range(1,pitches.size)]))
     bg_freq = init_dict
     freqs = bg_freq.values()
-    return freqs + examine_loudness(song) + [song['tempo']] + [song['time signature']] + [song['mode']] + [song['key']]
+    return freqs 
+    #+ examine_loudness(song) + [song['tempo']] + [song['time signature']] + [song['mode']] + [song['key']]
 
 def trigrams(song):
     pitches = np.argmax(song['pitches'],axis=1)
@@ -176,7 +164,7 @@ def trigrams(song):
     #print "loudness length: %d"%len(l_tg_freq.values())
     #return p_tg_freq.values() + l_tg_freq.values()
 
-def examine_loudness(song, num_segments=50):
+def examine_loudness(song, num_segments=5):
     '''
     Given a song feature dict, takes standard deviation of loudnesses 
     for fixed length segments to ascertain variability in loudnesses
