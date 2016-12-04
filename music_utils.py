@@ -27,7 +27,9 @@ def examine_loudness(song, num_segments=50):
     '''
     loudness_values = song['loudness'] # loudness for each segment
     if len(loudness_values) < num_segments:
-        raise Exception("Too few loudness values for the number of segments")
+        #raise Exception("Too few loudness values for the number of segments: {loud}".format(loud=len(loudness_values)))
+        #loudness_values = (loudness_values * (num_segments/len(loudness_values) + 1))[:num_segments]
+        loudness_values = [0] * num_segments
     chunk_lengths = len(loudness_values)/num_segments
     return [np.std(loudness_values[chunk_lengths * i:chunk_lengths * (i + 1)])\
         for i in xrange(num_segments)]

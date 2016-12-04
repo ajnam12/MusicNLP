@@ -5,7 +5,7 @@ import numpy as np
 from collections import Counter
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
-from keras.optimizers import SGD
+from keras.optimizers import SGD, RMSprop
 from keras.regularizers import l2, l1
 from music_utils import *
 import cPickle as pickle
@@ -79,9 +79,7 @@ def make_dataset(train_data, test_data, feature_extractor, genres, genre_idxs):
         y_train += [make_one_hot(genre_idxs[k])]*len(v)
         for song in v:
             feats = feature_extractor(song)
-            print len(feats)
             x_train.append(feats)
-            exit()
     print "extracting test data"
     for k,v in test_data.iteritems():
         print "- extracting %s"%k
@@ -94,10 +92,10 @@ def make_dataset(train_data, test_data, feature_extractor, genres, genre_idxs):
     y_train = np.array(y_train)
     x_test = np.array(x_test)
     y_test = np.array(y_test)
+    print x_train[0]
     print x_train.shape
     print y_train.shape
     x_train = np.hstack((x_train,y_train))
-    exit()
     np.random.shuffle(x_train)
     x_train, y_train = np.hsplit(x_train, [-4])
     print x_train.shape
@@ -107,23 +105,23 @@ def make_dataset(train_data, test_data, feature_extractor, genres, genre_idxs):
     return x_train, y_train, x_test, y_test
 
 ### TRAIN MODEL
-def train_model(train_data, test_data):
+def train_model(train_data, test_data, fe=trigrams, hidden_dim = 10, vec_size = 50):
     genres = ['jazz', 'hip hop rnb and dance hall', 'folk', 'rock']
     genre_idxs = dict(zip(genres, range(len(genres))))
-    fe = trigrams
     x_train, y_train, x_test, y_test = make_dataset(train_data, test_data, fe, genres, genre_idxs)
-    vec_size = 12**3 + 10**3
+    #12**3 + 10**3 prevous vec_size
     regs = [0.005, 0.01, 0.05]
     lrs = [0.01, 0.05, 0.1]
     num_layers = [1, 2, 3]
-    model = vanilla_model(vec_size, len(genres), num_layers=1, reg=0.01)
-    sgd = SGD(lr=0.1,decay=1e-6,momentum=0.9,nesterov=True)
+    model = vanilla_model(vec_size, len(genres), num_layers=1, reg=0)
+    #opt = SGD(lr=0.01,decay=1e-6,momentum=0.9,nesterov=True)
+    opt = RMSprop(lr=0.001)
     model.compile(loss='categorical_crossentropy',
-                  optimizer=sgd,
+                  optimizer=opt,
                   metrics=['accuracy'])
-
+    print 'there'
     print "Training..."
-    model.fit(x_train, y_train, nb_epoch=20,batch_size=50)
+    model.fit(x_train, y_train, nb_epoch=20,batch_size=10)
     print "Testing..."
     score = model.evaluate(x_test,y_test,batch_size=1)
     preds = model.predict(x_test,batch_size=1,verbose=1)
