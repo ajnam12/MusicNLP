@@ -5,13 +5,13 @@ song dataset
 '''
 
 # import sklearn
-from hdf5_getters import *
+#from hdf5_getters import *
 import os
 import numpy as np
 import glob 
 from collections import Counter
-#from pyo import *
-from time import sleep
+
+
 
 ##### Global constants #####
 kNumPitches = 12
@@ -19,27 +19,21 @@ kNoteFrequencies = [261.626, 277.183, 293.665, 311.127, 329.628, 349.228,\
  369.994, 391.995, 415.305, 440.000, 466.164, 493.883]
 ##### End global constants #####
 
-"""
-def play_song(pitches_array, segment_starts):
-    lengths = segments_lengths(segment_starts)
-    s = Server.boot()
-    osc = Osc(SineTable())
-    for i in xrange(len(pitches_array) - 1): # can't get the last one
-        pass
-"""
-#s = Server()
-#s.boot()
 
-def play_song(pitches_arrays, segment_starts):
-    lengths = segments_lengths(segment_starts)
-    sine = Sine()
-    sine.out()
-    s.start()
-    for i in xrange(len(pitches_arrays) - 1): # can't get the last one
-        freq = kNoteFrequencies[np.argmax(pitches_arrays[i])]
-        sine.freq = freq
-        sleep(lengths[i])
-    s.stop()
+def examine_loudness(song, num_segments=50):
+    '''
+    Given a song feature dict, takes standard deviation of loudnesses 
+    for fixed length segments to ascertain variability in loudnesses
+    '''
+    loudness_values = song['loudness'] # loudness for each segment
+    if len(loudness_values) < num_segments:
+        #raise Exception("Too few loudness values for the number of segments: {loud}".format(loud=len(loudness_values)))
+        #loudness_values = (loudness_values * (num_segments/len(loudness_values) + 1))[:num_segments]
+        loudness_values = [0] * num_segments
+    chunk_lengths = len(loudness_values)/num_segments
+    return [np.std(loudness_values[chunk_lengths * i:chunk_lengths * (i + 1)])\
+        for i in xrange(num_segments)]
+
 
 def extract_data(filename):
     '''
@@ -76,8 +70,17 @@ def data_to_words(info, mode = 'perms'):
     '''
     if mode is 'perms':
         return pitch_perms(info) # pitch permutations
+    elif mode is 'discretized':
+        return discrete_segments(info)
+    elif mode is 'max pitches':
+        return 
+    elif mode is 'max pitch diffs':
+        return 
     else:
         raise Exception('Requested mode \"{mode}\" is not supported'.format(mode=mode))
+
+def max_pitches(info):
+    return np.array(map(np.argmax, info[pitches]))
 
 def pitch_perms(info):
     '''
@@ -92,13 +95,11 @@ def pitch_perms(info):
         perms.append(perm)
     return perms
 
-def segments_lengths(segments):
+def diffs(arr):
     '''
-    Takes segments beginnings array
-    finds differences between adjacent
-    entries
+    Find diffs between adjacent entries 
     '''
-    return np.array([segments[i + 1] - segments[i] for i in xrange(segments.shape[0] - 1)])
+    return np.array([arr[i + 1] - arr[i] for i in xrange(arr.shape[0] - 1)])
 
 def discrete_segments(info, mult = 100):
     '''
@@ -108,7 +109,7 @@ def discrete_segments(info, mult = 100):
     length). Note we only look at all but the
     last segment (no interval for last segment)
     '''
-    time_intervals = segments_lengths(info['segments']) * mult
+    time_intervals = diffs(info['segments']) * mult
     return reduce(lambda x,y: x + y, map(lambda i: [i] * int(round(time_intervals[i])), range(len(time_intervals))))
 
 

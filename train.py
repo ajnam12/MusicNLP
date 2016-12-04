@@ -5,7 +5,7 @@ import numpy as np
 from collections import Counter
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
-from keras.optimizers import SGD
+from keras.optimizers import SGD, RMSprop
 from keras.regularizers import l2, l1
 from music_utils import *
 from graph_utils import *
@@ -121,10 +121,8 @@ def train_model(train_data, test_data, fe, vec_size):
     genre_idxs = dict(zip(genres, range(len(genres))))
     x_train, y_train, x_test, y_test = make_dataset(train_data, test_data, fe, genres, genre_idxs)
     regs = [0.005, 0.01, 0.05]
-    #lrs = [0.01, 0.05, 0.1]
-    #num_layers = [1, 2, 3]
-    lrs = [0.01]
-    num_layers = [1]
+    lrs = [0.01, 0.05, 0.1]
+    num_layers = [1, 2, 3]
     results = {}
     idx = 0
     tot = len(regs)*len(lrs)*len(num_layers)
