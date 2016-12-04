@@ -125,7 +125,6 @@ def make_dataset(train_data, test_data, feature_extractor, genres, genre_idxs):
 # vec_size = 12**3 + 21**2
 
 ### TRAIN MODEL
-<<<<<<< HEAD
 #def train_model(train_data, test_data):
 def train_model(x_train, y_train, x_test, y_test, vec_size):
     genres = ['jazz', 'hip hop rnb and dance hall', 'folk', 'rock']
