@@ -20,6 +20,17 @@ kNoteFrequencies = [261.626, 277.183, 293.665, 311.127, 329.628, 349.228,\
 ##### End global constants #####
 
 
+def examine_loudness(song, num_segments=50):
+    '''
+    Given a song feature dict, takes standard deviation of loudnesses 
+    for fixed length segments to ascertain variability in loudnesses
+    '''
+    loudness_values = song['loudness'] # loudness for each segment
+    if len(loudness_values) < num_segments:
+        raise Exception("Too few loudness values for the number of segments")
+    chunk_lengths = len(loudness_values)/num_segments
+    return [np.std(loudness_values[chunk_lengths * i:chunk_lengths * (i + 1)])\
+        for i in xrange(num_segments)]
 
 
 def extract_data(filename):
