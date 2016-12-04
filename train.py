@@ -5,21 +5,25 @@ import numpy as np
 from collections import Counter
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
-from keras.optimizers import SGD
+from keras.optimizers import SGD, Adagrad, Nadam
 from keras.regularizers import l2, l1
+import music_utils
 from music_utils import *
 import cPickle as pickle
+import random
 
-
+random.seed(221)
 
 ### NN MODELS
-def vanilla_model(input_dim, output_dim, hidden_dim=50, num_layers=1, reg=0.05):
+def vanilla_model(input_dim, output_dim, hidden_dim=200, num_layers=1, reg=0.05, non_linearity='tanh'):
     model = Sequential()
     model.add(Dense(hidden_dim, input_dim=input_dim, W_regularizer=l2(reg), init='glorot_normal'))
-    model.add(Activation('tanh'))
+    model.add(Activation(non_linearity))
+    model.add(Dropout(.5))
     for i in range(1,num_layers):
       model.add(Dense(hidden_dim, W_regularizer=l2(reg), init='glorot_normal'))
-      model.add(Activation('tanh'))
+      model.add(Activation(non_linearity))
+      model.add(Dropout(.5))
     model.add(Dense(output_dim, W_regularizer=l2(reg), init='glorot_normal'))
     model.add(Activation('softmax'))
     return model
@@ -79,9 +83,7 @@ def make_dataset(train_data, test_data, feature_extractor, genres, genre_idxs):
         y_train += [make_one_hot(genre_idxs[k])]*len(v)
         for song in v:
             feats = feature_extractor(song)
-            print len(feats)
             x_train.append(feats)
-            exit()
     print "extracting test data"
     for k,v in test_data.iteritems():
         print "- extracting %s"%k
@@ -97,7 +99,6 @@ def make_dataset(train_data, test_data, feature_extractor, genres, genre_idxs):
     print x_train.shape
     print y_train.shape
     x_train = np.hstack((x_train,y_train))
-    exit()
     np.random.shuffle(x_train)
     x_train, y_train = np.hsplit(x_train, [-4])
     print x_train.shape
@@ -106,26 +107,35 @@ def make_dataset(train_data, test_data, feature_extractor, genres, genre_idxs):
     print y_test.shape
     return x_train, y_train, x_test, y_test
 
+# genres = ['jazz', 'hip hop rnb and dance hall', 'folk', 'rock']
+# genre_idxs = dict(zip(genres, range(len(genres))))
+# fe = trigrams
+# x_train, y_train, x_test, y_test = make_dataset(train_data, test_data, fe, genres, genre_idxs)
+# vec_size = 12**3 + 21**2
+
 ### TRAIN MODEL
-def train_model(train_data, test_data):
+#def train_model(train_data, test_data):
+def train_model(x_train, y_train, x_test, y_test, vec_size):
     genres = ['jazz', 'hip hop rnb and dance hall', 'folk', 'rock']
     genre_idxs = dict(zip(genres, range(len(genres))))
-    fe = trigrams
-    x_train, y_train, x_test, y_test = make_dataset(train_data, test_data, fe, genres, genre_idxs)
-    vec_size = 12**3 + 10**3
+    
+    print x_train.shape
+    print x_test.shape
     regs = [0.005, 0.01, 0.05]
     lrs = [0.01, 0.05, 0.1]
     num_layers = [1, 2, 3]
-    model = vanilla_model(vec_size, len(genres), num_layers=1, reg=0.01)
-    sgd = SGD(lr=0.1,decay=1e-6,momentum=0.9,nesterov=True)
+    print "I AM GENEOUS"
+    model = vanilla_model(vec_size, len(genres), num_layers=1, reg=0.01, non_linearity='relu')
+    #opt = SGD(lr=0.001,decay=1e-6,momentum=0.9,nesterov=True)
+    opt = Adagrad()
     model.compile(loss='categorical_crossentropy',
-                  optimizer=sgd,
+                  optimizer=opt,
                   metrics=['accuracy'])
 
     print "Training..."
-    model.fit(x_train, y_train, nb_epoch=20,batch_size=50)
-    print "Testing..."
-    score = model.evaluate(x_test,y_test,batch_size=1)
-    preds = model.predict(x_test,batch_size=1,verbose=1)
-    print score
+    model.fit(x_train, y_train, validation_data=(x_test, y_test), nb_epoch=40,batch_size=50)
+    #print "Testing..."
+    #score = model.evaluate(x_test,y_test,batch_size=1)
+    #preds = model.predict(x_test,batch_size=1,verbose=1)
+    #print score
 

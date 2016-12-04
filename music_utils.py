@@ -143,21 +143,48 @@ def bag_of_words(song):
     freqs = bg_freq.values()
     return freqs
 
+def unigrams(song):
+    pitches = np.argmax(song['pitches'],axis=1)
+    init_dict = Counter({(i): 0 for i in range(-11,12)})
+    init_dict.update(Counter([(pitches[i-1] - pitches[i]) for i in range(1,pitches.size)]))
+    bg_freq = init_dict
+    freqs = bg_freq.values()
+    return freqs
+
 def bigrams(song):
     pitches = np.argmax(song['pitches'],axis=1)
     init_dict = Counter({(i,j): 0 for i in range(12) for j in range(12)})
     init_dict.update(Counter([(pitches[i-1],pitches[i]) for i in range(1,pitches.size)]))
     bg_freq = init_dict
     freqs = bg_freq.values()
-    return freqs
+    return freqs + examine_loudness(song) + [song['tempo']] + [song['time signature']] + [song['mode']] + [song['key']]
 
 def trigrams(song):
     pitches = np.argmax(song['pitches'],axis=1)
     init_dict = Counter({(i,j,k): 0 for i in range(12) for j in range(12) for k in range(12)})
     init_dict.update(Counter([(pitches[i-2],pitches[i-1],pitches[i]) for i in range(2,pitches.size)]))
     p_tg_freq = init_dict
-    loudness = np.round(song['loudness'], decimals=0)
-    init_dict = Counter({(i,j,k): 0 for i in range(10) for j in range(10) for k in range(10)})
-    init_dict.update(Counter([(loudness[i-2],loudness[i-1],loudness[i]) for i in range(2,pitches.size)]))
-    l_tg_freq = init_dict
-    return p_tg_freq.values() + l_tg_freq.values()
+    return list(p_tg_freq.values()) + examine_loudness(song)
+
+    # loudness = np.array(song['loudness'])
+    # init_dict = Counter({(i,j): 0 for i in range(-10, 11) for j in range(-10, 11)})
+    # init_dict.update(Counter([(max(-10, min(10, int(loudness[i-2] - loudness[i-1]))), max(-10, min(10, int(loudness[i-1] - loudness[i])))) for i in range(2,pitches.size)]))
+    # l_tg_freq = init_dict
+    #print [key for key, val in l_tg_freq.iteritems() if val> 0]
+    #print "pitches length: %d"%len(p_tg_freq.values())
+    #print "loudness length: %d"%len(l_tg_freq.values())
+    #return p_tg_freq.values() + l_tg_freq.values()
+
+def examine_loudness(song, num_segments=50):
+    '''
+    Given a song feature dict, takes standard deviation of loudnesses 
+    for fixed length segments to ascertain variability in loudnesses
+    '''
+    loudness_values = song['loudness'] # loudness for each segment
+    if len(loudness_values) < num_segments:
+        #raise Exception("Too few loudness values for the number of segments: {loud}".format(loud=len(loudness_values)))
+        #loudness_values = (loudness_values * (num_segments/len(loudness_values) + 1))[:num_segments]
+        loudness_values = [0] * num_segments
+    chunk_lengths = len(loudness_values)/num_segments
+    return [np.std(loudness_values[chunk_lengths * i:chunk_lengths * (i + 1)])\
+        for i in xrange(num_segments)]
